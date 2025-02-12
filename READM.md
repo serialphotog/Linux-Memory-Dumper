@@ -1,0 +1,18 @@
+# Linux Memory Analysis Tools
+
+This repository contains some proof-of-concept tools for working with memory analysis on Linux. These work by locating the physical RAM address ranges by processing `/proc/iomem` and associating with regions in `/proc/kcore`. There are currently two tools provided here:
+
+1. `dumpmemory` - Dumps the physical RAM of the system to a file on disk:
+    ```
+    dumpmemory <output_file>
+    ```
+2. `scanmemory` - Scans the system memory for a specified string pattern. Technically there's not many circumstances where you'd want this, but it serves as a POC of how something like this could work:
+    ```
+    scanmemory <pattern> <bytes_of_context>
+    ```
+
+## Building 
+
+```bash
+make
+```
