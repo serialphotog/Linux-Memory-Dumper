@@ -1,17 +1,17 @@
 /*
-This file is part of Linux Memory Analysis Tools.
+This file is part of Linux Memory Dumper.
 
-Foobar is free software: you can redistribute it and/or modify it under the 
-terms of the GNU General Public License as published by the Free Software 
-Foundation, either version 3 of the License, or (at your option) any later 
+Linux Memory Dumper is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-Foobar is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+Linux Memory Dumper is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with 
-Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -44,11 +44,11 @@ Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
  * 
  * @return the number of matches found, or -1 if there's an error
  */
-int scan_memory_region(int kcore_fd, 
-                       const char* pattern, 
-                       int context_bytes, 
-                       uint64_t offset, 
-                       size_t size)
+static int scan_memory_region(const int kcore_fd, 
+                              const char* pattern, 
+                              const int context_bytes, 
+                              const uint64_t offset, 
+                              const size_t size)
 {
     int matches = 0;
     int pattern_len = strlen(pattern);
@@ -108,7 +108,9 @@ int scan_memory_region(int kcore_fd,
  * 
  * @return 0 for success, else -1 if there's an error
  */
-int write_memory_region(int out_fd, int kcore_fd, size_t len)
+static int write_memory_region(const int out_fd, 
+                               const int kcore_fd, 
+                               const size_t len)
 {
     size_t remaining = len;
     size_t next_chunk;
@@ -166,10 +168,10 @@ int write_memory_region(int out_fd, int kcore_fd, size_t len)
  * 
  * @return 0 for success, else -1 if there's an error
  */
-int write_lime(int kcore_fd,
-               int out_fd,
-               struct section* sections,
-               int num_ranges)
+static int write_lime(const int kcore_fd,
+                      const int out_fd,
+                      const struct section* sections,
+                      const int num_ranges)
 {
     // Setup the basic header structure
     lime_memory_range_header lime_header;
@@ -226,11 +228,11 @@ int write_lime(int kcore_fd,
  * 
  * @return The total number of matches, else -1 if there's an error
  */
-int scan_kcore(int kcore_fd,
+int scan_kcore(const int kcore_fd,
                const char* pattern,
-               int context_bytes,
+               const int context_bytes,
                struct section* sections,
-               int num_ranges)
+               const int num_ranges)
 {
     int total_matches = 0;
 
@@ -288,10 +290,10 @@ int dump_kcore(int kcore_fd,
  * 
  * @return The number of associated sections
  */
-int match_physical_addresses_to_phdrs(Elf64_Phdr* prog_hdr,
-                                      unsigned int num_hdrs,
-                                      struct addr_range* ranges,
-                                      unsigned int num_physical_ranges,
+int match_physical_addresses_to_phdrs(const Elf64_Phdr* prog_hdr,
+                                      const unsigned int num_hdrs,
+                                      const struct addr_range* ranges,
+                                      const unsigned int num_physical_ranges,
                                       struct section* sections)
 {
     int filled_sections = 0;

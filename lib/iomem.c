@@ -1,17 +1,17 @@
 /*
-This file is part of Linux Memory Analysis Tools.
+This file is part of Linux Memory Dumper.
 
-Foobar is free software: you can redistribute it and/or modify it under the 
-terms of the GNU General Public License as published by the Free Software 
-Foundation, either version 3 of the License, or (at your option) any later 
+Linux Memory Dumper is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-Foobar is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+Linux Memory Dumper is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with 
-Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -36,9 +36,16 @@ Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
 int get_system_ram_address_ranges(struct addr_range* addrs)
 {
     FILE* iomem_fd;
-    char* lineptr = malloc(LINE_SIZE);
     size_t n = LINE_SIZE;
     int count = 0;
+
+    char* lineptr = malloc(LINE_SIZE);
+    if (NULL == lineptr)
+    {
+        fprintf(stderr, "%sFailed to allocate memory for line buffer%s\n", 
+            COLOR_RED, COLOR_CLEAR);
+        return -1;
+    }
 
     if (NULL == (iomem_fd = fopen(IOMEM_FILENAME, "r")))
     {

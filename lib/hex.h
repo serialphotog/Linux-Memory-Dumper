@@ -1,17 +1,17 @@
 /*
-This file is part of Linux Memory Analysis Tools.
+This file is part of Linux Memory Dumper.
 
-Foobar is free software: you can redistribute it and/or modify it under the 
-terms of the GNU General Public License as published by the Free Software 
-Foundation, either version 3 of the License, or (at your option) any later 
+Linux Memory Dumper is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-Foobar is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+Linux Memory Dumper is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with 
-Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -27,8 +27,8 @@ Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
 #define HEX_HEADER_PADDING 37
 
 void print_hex_and_ascii(const unsigned char* data, 
-                         size_t size, 
-                         long offset, 
+                         const size_t size, 
+                         const long offset, 
                          const char* pattern, 
-                         size_t pattern_len, 
-                         size_t match_pos);
+                         const size_t pattern_len, 
+                         const size_t match_pos);

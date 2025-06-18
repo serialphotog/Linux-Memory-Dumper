@@ -1,17 +1,17 @@
 /*
-This file is part of Linux Memory Analysis Tools.
+This file is part of Linux Memory Dumper.
 
-Foobar is free software: you can redistribute it and/or modify it under the 
-terms of the GNU General Public License as published by the Free Software 
-Foundation, either version 3 of the License, or (at your option) any later 
+Linux Memory Dumper is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-Foobar is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+Linux Memory Dumper is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with 
-Linux Memory Analysis Tools. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 */
 
 
@@ -41,7 +41,7 @@ char get_ascii_representation(const char c)
  * @param offset The offset in kcore where the match was found
  * @param pos    The position of the match
  */
-void print_match_header(long offset, size_t pos)
+void print_match_header(const long offset, const size_t pos)
 {
     printf("\nMatch at offset 0x%lx\n", offset + pos);
     printf("     Offset    | Hexadecimal");
@@ -69,11 +69,11 @@ void print_match_header(long offset, size_t pos)
  * @param match_os    The position of the match
  */
 void print_hex_and_ascii(const unsigned char* data, 
-                         size_t size, 
-                         long offset, 
+                         const size_t size, 
+                         const long offset, 
                          const char* pattern, 
-                         size_t pattern_len, 
-                         size_t match_pos)
+                         const size_t pattern_len, 
+                         const size_t match_pos)
 {
     print_match_header(offset, match_pos);
 
