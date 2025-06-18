@@ -26,12 +26,6 @@ int dump_kcore(int kcore_fd,
                struct section* sections, 
                int num_ranges);
 
-int scan_kcore(const int kcore_fd, 
-               const char* pattern, 
-               const int context_bytes, 
-               struct section* sections, 
-               const int num_ranges);
-
 int match_physical_addresses_to_phdrs(const Elf64_Phdr* prog_hdr,
                                       const unsigned int num_hdrs,
                                       const struct addr_range* ranges,

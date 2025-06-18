@@ -21,7 +21,6 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #include "kcore.h"
 
 #include "colors.h"
-#include "hex.h"
 #include "lime.h"
 
 #include <elf.h>
@@ -32,72 +31,6 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #include <fcntl.h>
 
 #define CHUNK_SIZE 0x100000 // 1M
-
-/**
- * Scans an individual memory region looking for a pattern.
- * 
- * @param kcore_fd      The file descriptor for /proc/kcore
- * @param pattern       The pattern to search for
- * @param context_bytes The number of bytes of context to include around a match
- * @param offset        The offset into kcore to scan 
- * @param size          The size of the memory region to scan
- * 
- * @return the number of matches found, or -1 if there's an error
- */
-static int scan_memory_region(const int kcore_fd, 
-                              const char* pattern, 
-                              const int context_bytes, 
-                              const uint64_t offset, 
-                              const size_t size)
-{
-    int matches = 0;
-    int pattern_len = strlen(pattern);
-    size_t buffer_size = pattern_len + (2 * context_bytes);
-    unsigned char* buffer = malloc(buffer_size);
-    if (NULL == buffer)
-    {
-        fprintf(stderr, "%sFailed to allocated buffer for scan!%s\n", COLOR_RED, 
-            COLOR_CLEAR);
-        return -1;
-    }
-
-    uint64_t file_pos = offset;
-    size_t section_bounds = offset + size;
-    while (file_pos <= section_bounds - pattern_len)
-    {
-        lseek(kcore_fd, context_bytes ? file_pos - context_bytes : 0, SEEK_SET);
-        size_t read_size = read(kcore_fd, buffer, buffer_size);
-        if (read_size < pattern_len)
-        {
-            break;
-        }
-
-        // Check for a pattern match
-        if (memcmp(buffer + 
-            (file_pos > context_bytes 
-                ? context_bytes 
-                : file_pos), pattern, pattern_len) 
-            == 0)
-        {
-            size_t prefix = (file_pos > context_bytes ? context_bytes : file_pos);
-            size_t suffix = (file_pos + pattern_len + context_bytes <= section_bounds)
-                ? context_bytes : section_bounds - (file_pos + pattern_len);
-            size_t total_size = prefix + pattern_len + suffix;
-
-            // Display the match
-            print_hex_and_ascii(buffer, total_size, 
-                file_pos > context_bytes ? file_pos - context_bytes : 0, 
-                pattern, pattern_len, 
-                file_pos > context_bytes ? context_bytes : file_pos);
-
-            matches++;
-        }
-
-        file_pos++;
-    }
-
-    return matches;
-}
 
 /**
  * Writes a memory region to an output file.asm
@@ -215,49 +148,6 @@ static int write_lime(const int kcore_fd,
     }
 
     return 0;
-}
-
-/**
- * Scans the /proc/kcore file looking for a pattern.asm
- * 
- * @param kcore_fd      The file descriptor of the /proc/kcore file
- * @param pattern       The pattern to search for
- * @param context_bytes The number of bytes of context to include around a match
- * @param sections      The memory sections to scan
- * @param num_ranges    The number of memory ranges to scan
- * 
- * @return The total number of matches, else -1 if there's an error
- */
-int scan_kcore(const int kcore_fd,
-               const char* pattern,
-               const int context_bytes,
-               struct section* sections,
-               const int num_ranges)
-{
-    int total_matches = 0;
-
-    // Scan each memory region
-    for (int i = 0; i < num_ranges; i++)
-    {
-        uint64_t s_addr = sections[i].physical_base;
-        uint64_t e_addr = sections[i].physical_base + sections[i].size - 1;
-        printf("%sScanning section %d (0x%lx - 0x%lx) for %s%s\n", COLOR_CYAN, 
-            i, s_addr, e_addr, pattern, COLOR_CLEAR);
-
-        // Perform the scan
-        int section_matches = scan_memory_region(kcore_fd, pattern, 
-            context_bytes, sections[i].file_offset, sections[i].size);
-        if (-1 == section_matches)
-        {
-            fprintf(stderr, "%sFailed to scan memory region %d%s\n", 
-                COLOR_RED, i, COLOR_CLEAR);
-            return -1;
-        }
-
-        total_matches += section_matches;
-    }
-
-    return total_matches;
 }
 
 /**
