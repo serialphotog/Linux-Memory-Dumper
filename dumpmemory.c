@@ -20,7 +20,7 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 
 #include "lib/lmat.h"
 
-#include "lib/colors.h"
+#include "lib/color-print.h"
 #include "lib/iomem.h"
 #include "lib/kcore.h"
 
@@ -47,8 +47,7 @@ int main(int argc, char* argv[])
     // We will require root privileges to dump kcore
     if (0 != getuid())
     {
-        printf("%sThis program requires root privileges to function!%s\n", 
-            COLOR_RED, COLOR_CLEAR);
+        fprint_red(stderr, "[-] This program required root privileges to function!\n");
         ret = -1;
         goto cleanup;
     }
@@ -56,8 +55,7 @@ int main(int argc, char* argv[])
     // Obtain a handle to /proc/kcore
     if (-1 == (kcore_fd = open64(KCORE_FILENAME, O_RDWR | O_LARGEFILE)))
     {
-        fprintf(stderr, "%sCould not open %s%s\n", COLOR_RED, 
-            KCORE_FILENAME, COLOR_CLEAR);
+        fprint_red(stderr, "[-] Could not open %s\n", KCORE_FILENAME);
         ret = -1;
         goto cleanup;
     }
@@ -67,8 +65,7 @@ int main(int argc, char* argv[])
     int num_physical_ranges = get_system_ram_address_ranges(ranges);
     if (-1 == num_physical_ranges)
     {
-        fprintf(stderr, "%sFailed to get physical memory ranges%s\n", 
-            COLOR_RED, COLOR_CLEAR);
+        fprint_red(stderr, "[-] Failed to get physical memory range\n");
         ret = -1;
         goto cleanup;
     }
@@ -83,8 +80,7 @@ int main(int argc, char* argv[])
     Elf64_Phdr* prog_hdr = (Elf64_Phdr*) malloc(phdrs_size);
     if (NULL == prog_hdr)
     {
-        fprintf(stderr, "%sFailed to get program headers from kcore%s\n", 
-            COLOR_RED, COLOR_CLEAR);
+        fprint_red(stderr, "[-] Failed to get program headers from kcore\n");
         ret = -1;
         goto cleanup;
     }
@@ -99,8 +95,7 @@ int main(int argc, char* argv[])
     if (-1 == (out_fd = 
         open64(output_file, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR)))
     {
-        fprintf(stderr, "%sCould not open %s%s\n", COLOR_RED, output_file, 
-            COLOR_CLEAR);
+        fprint_red(stderr, "[-] Could not open %s\n", output_file);
         ret = -1;
         goto cleanup;
     }
@@ -108,14 +103,12 @@ int main(int argc, char* argv[])
     // Finally, dump kcore to disk
     if (-1 == dump_kcore(kcore_fd, out_fd, sections, num_physical_ranges))
     {
-        fprintf(stderr, "%sFailed to dump memory to disk%s\n", COLOR_RED, 
-            COLOR_CLEAR);
+        fprint_red(stderr, "[-] Failed to dump memory to disk\n");
         ret = -1;
         goto cleanup;
     }
 
-    printf("%sSuccessfully dumped kcore to %s%s\n", COLOR_GREEN, output_file, 
-        COLOR_CLEAR);
+    print_green("[+] Successfully dumped kcore to %s\n", output_file);
 
     // Cleanup
 cleanup:

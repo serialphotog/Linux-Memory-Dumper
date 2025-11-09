@@ -17,7 +17,7 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 
 #include "iomem.h"
 
-#include "colors.h"
+#include "color-print.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,19 +42,17 @@ int get_system_ram_address_ranges(struct addr_range* addrs)
     char* lineptr = malloc(LINE_SIZE);
     if (NULL == lineptr)
     {
-        fprintf(stderr, "%sFailed to allocate memory for line buffer%s\n", 
-            COLOR_RED, COLOR_CLEAR);
+        fprint_red(stderr, "[-] Failed to allocated memory for line buffer\n");
         return -1;
     }
 
     if (NULL == (iomem_fd = fopen(IOMEM_FILENAME, "r")))
     {
-        fprintf(stderr, "%sCould not open %s%s\n", COLOR_RED, IOMEM_FILENAME, 
-            COLOR_CLEAR);
+        fprint_red(stderr, "[-] Could not open %s\n", IOMEM_FILENAME);
         return -1;
     }
 
-    printf("Scanning %s for physical memory regions\n", IOMEM_FILENAME);
+    print_green("[*] Scanning %s for physical memory regions\n", IOMEM_FILENAME);
 
     int index = 0;
     while (getline(&lineptr, &n, iomem_fd) != -1)
@@ -70,8 +68,7 @@ int get_system_ram_address_ranges(struct addr_range* addrs)
 
             if (++count >= MAX_PHYSICAL_RANGES)
             {
-                fprintf(stderr, "%sToo many physical memory ranges encountered%s\n", 
-                    COLOR_RED, COLOR_CLEAR);
+                fprint_red(stderr, "[-] Too many physical memory regions encountered\n");
                 return -1;
             }
         }

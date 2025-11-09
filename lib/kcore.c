@@ -20,7 +20,7 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 
 #include "kcore.h"
 
-#include "colors.h"
+#include "color-print.h"
 #include "lime.h"
 
 #include <elf.h>
@@ -52,7 +52,7 @@ static int write_memory_region(const int out_fd,
     if (NULL == buffer)
     {
         // Shouldn't happen...
-        fprintf(stderr, "%sFailed to malloc buffer%s\n", COLOR_RED, COLOR_CLEAR);
+        fprint_red(stderr, "[-] Failed to malloc buffer\n");
         return -1;
     }
 
@@ -70,7 +70,7 @@ static int write_memory_region(const int out_fd,
         have_read = read(kcore_fd, buffer, next_chunk);
         if (-1 == have_read)
         {
-            fprintf(stderr, "%sKcore read failed!%s\n", COLOR_RED, COLOR_CLEAR);
+            fprint_red(stderr, "[-] Kcore read failed!\n");
             free(buffer);
             return -1;
         }
@@ -78,8 +78,7 @@ static int write_memory_region(const int out_fd,
         written = write(out_fd, buffer, have_read);
         if (-1 == written)
         {
-            fprintf(stderr, "%sFailed to write memory region!%s\n", COLOR_RED, 
-                COLOR_CLEAR);
+            fprint_red(stderr, "[-] Failed to write memory regions!\n");
             free(buffer);
             return -1;
         }
@@ -122,27 +121,25 @@ static int write_lime(const int kcore_fd,
         if (sizeof(lime_memory_range_header) != 
             write(out_fd, &lime_header, sizeof(lime_memory_range_header)))
         {
-            fprintf(stderr, "%sError writing file header (errno %d)%s\n", 
-                COLOR_RED, errno, COLOR_CLEAR);
+            fprint_red(stderr, "[-] Error writing file header (errno %d)\n", errno);
             return -1;
         }
 
-        printf("%sCopying section %d (0x%lx - 0x%lx)%s\n", COLOR_CYAN, i, 
-            lime_header.s_addr, lime_header.e_addr, COLOR_CLEAR);
+        print_cyan("\t[*] Copying section %d (0x%lx - 0x%lx)\n", 
+            i, lime_header.s_addr, lime_header.e_addr);
 
         // Copy over the actual memory content
         off64_t pos = lseek64(kcore_fd, sections[i].file_offset, SEEK_SET);
         if (-1 == pos)
         {
-            fprintf(stderr, "%sError setting position in kcore (errno %d)%s\n", 
-                COLOR_RED, errno, COLOR_CLEAR);
+            fprint_red(stderr, "[-] Error setting position in kcore (errno %d)\n", 
+                errno);
             return -1;
         }
 
         if (write_memory_region(out_fd, kcore_fd, sections[i].size) != 0)
         {
-            fprintf(stderr, "%sError writing data (errno %d)%s\n", COLOR_RED, 
-                errno, COLOR_CLEAR);
+            fprint_red(stderr, "[-] Error writing data (errno %d)\n", errno);
             return -1;
         }
     }
@@ -188,7 +185,7 @@ int match_physical_addresses_to_phdrs(const Elf64_Phdr* prog_hdr,
 {
     int filled_sections = 0;
 
-    printf("Attempting to associate memory ranges from %s with headers from %s\n", 
+    print_green("[*] Attempting to associate memory ranges from %s with headers from %s\n", 
         IOMEM_FILENAME, KCORE_FILENAME);
 
     for (int i = 0; i < num_hdrs; i++)
