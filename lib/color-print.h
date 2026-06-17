@@ -44,8 +44,16 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define COLOR_PRINT_FORMAT(format_index, first_arg) __attribute__((format(printf, format_index, first_arg)))
+#else
+#define COLOR_PRINT_FORMAT(format_index, first_arg)
+#endif
+
 // Color definitions
-#define CLI_COLOR_CLEAR     "\033[31m"
+#define CLI_COLOR_CLEAR     "\033[0m"
+#define CLI_COLOR_RESET     CLI_COLOR_CLEAR
+#define CLI_COLOR_NONE      CLI_COLOR_CLEAR
 #define CLI_COLOR_RED       "\033[31m"
 #define CLI_COLOR_GREEN     "\033[32m"
 #define CLI_COLOR_YELLOW    "\033[33m"
@@ -56,18 +64,22 @@
 
 // Macro that generates the helper functions for printing colored messages to
 // the console.
-#define DEFINE_COLOR_PRINT(name, color)                         \
-    static inline void print_##name(const char *format, ...) {                \
-        va_list args;                                           \
-        va_start(args, format);                                 \
-        vprint_color(stdout, color, format, args);              \
-        va_end(args);                                           \
-    }                                                           \
+#define DEFINE_COLOR_PRINT(name, color)                                      \
+    static inline void print_##name(const char *format, ...)                 \
+        COLOR_PRINT_FORMAT(1, 2);                                            \
+    static inline void print_##name(const char *format, ...) {               \
+        va_list args;                                                        \
+        va_start(args, format);                                              \
+        vprint_color(stdout, color, format, args);                           \
+        va_end(args);                                                        \
+    }                                                                        \
+    static inline void fprint_##name(FILE *stream, const char *format, ...)  \
+        COLOR_PRINT_FORMAT(2, 3);                                            \
     static inline void fprint_##name(FILE *stream, const char *format, ...) { \
-        va_list args;                                           \
-        va_start(args, format);                                 \
-        vprint_color(stream, color, format, args);              \
-        va_end(args);                                           \
+        va_list args;                                                        \
+        va_start(args, format);                                              \
+        vprint_color(stream, color, format, args);                           \
+        va_end(args);                                                        \
     }
 
 /**
@@ -94,6 +106,9 @@ static inline void vprint_color(FILE *stream, const char *color, const char *for
  *      - const char *format: The format string to use for printing.
  *      - ... The remaining arguments to pass to `printf`.
 */
+static inline void print_color(const char *color, const char *format, ...)
+    COLOR_PRINT_FORMAT(2, 3);
+
 static inline void print_color(const char *color, const char *format, ...) 
 {
     va_list args;
@@ -110,6 +125,9 @@ static inline void print_color(const char *color, const char *format, ...)
  *      - const char *format: The format string to use for printing.
  *      - ... The remaining arguments to pass to `printf`.
 */
+static inline void fprint_color(FILE *stream, const char *color, const char *format, ...)
+    COLOR_PRINT_FORMAT(3, 4);
+
 static inline void fprint_color(FILE *stream, const char *color, const char *format, ...)
 {
     va_list args;
