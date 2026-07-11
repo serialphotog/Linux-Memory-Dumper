@@ -29,8 +29,40 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #define CHUNK_SIZE 0x100000 // 1M
+
+static int write_all(const int fd, const void* buffer, const size_t len)
+{
+    size_t remaining = len;
+    const char* cursor = (const char*) buffer;
+
+    while (remaining > 0)
+    {
+        ssize_t written = write(fd, cursor, remaining);
+        if (-1 == written)
+        {
+            if (EINTR == errno)
+            {
+                continue;
+            }
+
+            return -1;
+        }
+
+        if (0 == written)
+        {
+            errno = EIO;
+            return -1;
+        }
+
+        cursor += written;
+        remaining -= written;
+    }
+
+    return 0;
+}
 
 /**
  * Writes a memory region to an output file.asm
@@ -47,7 +79,6 @@ static int write_memory_region(const int out_fd,
 {
     size_t remaining = len;
     size_t next_chunk;
-    int have_read, written;
     char* buffer = malloc(CHUNK_SIZE);
     if (NULL == buffer)
     {
@@ -67,23 +98,34 @@ static int write_memory_region(const int out_fd,
             next_chunk = remaining;
         }
 
-        have_read = read(kcore_fd, buffer, next_chunk);
+        ssize_t have_read = read(kcore_fd, buffer, next_chunk);
         if (-1 == have_read)
         {
+            if (EINTR == errno)
+            {
+                continue;
+            }
+
             fprint_red(stderr, "[-] Kcore read failed!\n");
             free(buffer);
             return -1;
         }
 
-        written = write(out_fd, buffer, have_read);
-        if (-1 == written)
+        if (0 == have_read)
+        {
+            fprint_red(stderr, "[-] Unexpected end of kcore while reading memory region!\n");
+            free(buffer);
+            return -1;
+        }
+
+        if (-1 == write_all(out_fd, buffer, have_read))
         {
             fprint_red(stderr, "[-] Failed to write memory regions!\n");
             free(buffer);
             return -1;
         }
 
-        remaining -= written;
+        remaining -= have_read;
     }
 
     free(buffer);
@@ -118,8 +160,7 @@ static int write_lime(const int kcore_fd,
         lime_header.e_addr = sections[i].physical_base + sections[i].size - 1;
 
         // Write the LiME memory range header
-        if (sizeof(lime_memory_range_header) != 
-            write(out_fd, &lime_header, sizeof(lime_memory_range_header)))
+        if (-1 == write_all(out_fd, &lime_header, sizeof(lime_memory_range_header)))
         {
             fprint_red(stderr, "[-] Error writing file header (errno %d)\n", errno);
             return -1;

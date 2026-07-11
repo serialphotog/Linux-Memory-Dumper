@@ -24,16 +24,52 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #include "lib/iomem.h"
 #include "lib/kcore.h"
 
+#include <errno.h>
 #include <elf.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+static int read_exact(const int fd, void* buffer, const size_t len, const char* desc)
+{
+    size_t remaining = len;
+    char* cursor = (char*) buffer;
+
+    while (remaining > 0)
+    {
+        ssize_t have_read = read(fd, cursor, remaining);
+        if (-1 == have_read)
+        {
+            if (EINTR == errno)
+            {
+                continue;
+            }
+
+            fprint_red(stderr, "[-] Failed to read %s (errno %d)\n", desc, errno);
+            return -1;
+        }
+
+        if (0 == have_read)
+        {
+            fprint_red(stderr, "[-] Unexpected end of file while reading %s\n", desc);
+            return -1;
+        }
+
+        cursor += have_read;
+        remaining -= have_read;
+    }
+
+    return 0;
+}
 
 int main(int argc, char* argv[])
 {
     int ret = 0;
-    int kcore_fd, out_fd;
+    int kcore_fd = -1;
+    int out_fd = -1;
+    Elf64_Phdr* prog_hdr = NULL;
 
     // The program expects a single argument: the file to dump memory to
     if (argc < 2)
@@ -72,19 +108,33 @@ int main(int argc, char* argv[])
 
     // Get the ELF headers from kcore
     Elf64_Ehdr elf_hdr;
-    read(kcore_fd, (void*)&elf_hdr, sizeof(elf_hdr));
+    if (-1 == read_exact(kcore_fd, (void*)&elf_hdr, sizeof(elf_hdr), "kcore ELF header"))
+    {
+        ret = -1;
+        goto cleanup;
+    }
 
     // Get the program headers from kcore
-    lseek(kcore_fd, elf_hdr.e_phoff, SEEK_SET);
+    if (-1 == lseek64(kcore_fd, elf_hdr.e_phoff, SEEK_SET))
+    {
+        fprint_red(stderr, "[-] Failed to seek to kcore program headers (errno %d)\n", errno);
+        ret = -1;
+        goto cleanup;
+    }
+
     size_t phdrs_size = elf_hdr.e_phnum * elf_hdr.e_phentsize;
-    Elf64_Phdr* prog_hdr = (Elf64_Phdr*) malloc(phdrs_size);
+    prog_hdr = (Elf64_Phdr*) malloc(phdrs_size);
     if (NULL == prog_hdr)
     {
         fprint_red(stderr, "[-] Failed to get program headers from kcore\n");
         ret = -1;
         goto cleanup;
     }
-    read(kcore_fd, (void*)prog_hdr, phdrs_size);
+    if (-1 == read_exact(kcore_fd, (void*)prog_hdr, phdrs_size, "kcore program headers"))
+    {
+        ret = -1;
+        goto cleanup;
+    }
 
     // Map the physical address ranges from iomem to the headers from kcore
     struct section sections[MAX_PHYSICAL_RANGES];
