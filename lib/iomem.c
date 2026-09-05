@@ -35,21 +35,23 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
  */
 int get_system_ram_address_ranges(struct addr_range* addrs)
 {
-    FILE* iomem_fd;
+    FILE* iomem_fd = NULL;
+    char* lineptr = NULL;
     size_t n = LINE_SIZE;
     int count = 0;
+    int ret = -1;
 
-    char* lineptr = malloc(LINE_SIZE);
+    lineptr = malloc(LINE_SIZE);
     if (NULL == lineptr)
     {
-        fprint_red(stderr, "[-] Failed to allocated memory for line buffer\n");
-        return -1;
+        fprint_red(stderr, "[-] Failed to allocate memory for line buffer\n");
+        goto cleanup;
     }
 
     if (NULL == (iomem_fd = fopen(IOMEM_FILENAME, "r")))
     {
         fprint_red(stderr, "[-] Could not open %s\n", IOMEM_FILENAME);
-        return -1;
+        goto cleanup;
     }
 
     print_green("[*] Scanning %s for physical memory regions\n", IOMEM_FILENAME);
@@ -60,17 +62,22 @@ int get_system_ram_address_ranges(struct addr_range* addrs)
         if (strstr(lineptr, SYSTEM_RAM_LABEL))
         {
             uint64_t start, end;
-            sscanf(lineptr, "%lx-%lx", &start, &end);
+            if (sscanf(lineptr, "%lx-%lx", &start, &end) != 2)
+            {
+                fprint_red(stderr, "[-] Could not parse iomem line: %s\n", lineptr);
+                goto cleanup;
+            }
+
+            if (count >= MAX_PHYSICAL_RANGES)
+            {
+                fprint_red(stderr, "[-] Too many physical memory regions encountered: [%d]\n", count);
+                goto cleanup;
+            }
 
             addrs[count].index = index;
             addrs[count].start = start;
             addrs[count].end = end;
-
-            if (++count >= MAX_PHYSICAL_RANGES)
-            {
-                fprint_red(stderr, "[-] Too many physical memory regions encountered\n");
-                return -1;
-            }
+            count++;
         }
 
         if (lineptr[0] != ' ')
@@ -79,8 +86,13 @@ int get_system_ram_address_ranges(struct addr_range* addrs)
         }
     }
 
-    fclose(iomem_fd);
-    free(lineptr);
+    ret = count;
 
-    return count;
+cleanup:
+    if (NULL != iomem_fd)
+    {
+        fclose(iomem_fd);
+    }
+    free(lineptr);
+    return ret;
 }
