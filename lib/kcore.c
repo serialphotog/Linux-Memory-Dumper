@@ -235,6 +235,13 @@ int match_physical_addresses_to_phdrs(const Elf64_Phdr* prog_hdr,
         {
             if (prog_hdr[i].p_paddr == ranges[j].start)
             {
+                if (filled_sections >= MAX_PHYSICAL_RANGES)
+                {
+                    fprint_red(stderr, "[-] More matching sections than MAX_PHYSICAL_RANGES allows (%d) vs. (%d)\n",
+                               filled_sections, MAX_PHYSICAL_RANGES);
+                    return -1;
+                }
+
                 sections[filled_sections].physical_base = ranges[j].start;
                 sections[filled_sections].file_offset = prog_hdr[i].p_offset;
                 sections[filled_sections].size = prog_hdr[i].p_memsz;
