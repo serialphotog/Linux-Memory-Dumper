@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
     }
 
     // Get the physical memory ranges from iomem
-    struct addr_range ranges[MAX_PHYSICAL_RANGES];
+    struct addr_range ranges[MAX_PHYSICAL_RANGES] = { 0 };
     int num_physical_ranges = get_system_ram_address_ranges(ranges);
     if (-1 == num_physical_ranges)
     {
@@ -137,13 +137,21 @@ int main(int argc, char* argv[])
     }
 
     // Map the physical address ranges from iomem to the headers from kcore
-    struct section sections[MAX_PHYSICAL_RANGES];
-    match_physical_addresses_to_phdrs(prog_hdr, elf_hdr.e_phnum, ranges, 
-        num_physical_ranges, sections);
+    struct section sections[MAX_PHYSICAL_RANGES] = { 0 };
+    int num_sections = match_physical_addresses_to_phdrs(prog_hdr, 
+                                                         elf_hdr.e_phnum, 
+                                                         ranges, 
+                                                         num_physical_ranges, 
+                                                         sections);
+    if (num_sections <= 0)
+    {
+        fprint_red(stderr, "[-] No kcore segments matched the physical RAM ranges.\n");
+        ret = -1;
+        goto cleanup;
+    }
 
     // Obtain a handle to the output file
-    if (-1 == (out_fd = 
-        open64(output_file, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR)))
+    if (-1 == (out_fd = open64(output_file, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR)))
     {
         fprint_red(stderr, "[-] Could not open %s\n", output_file);
         ret = -1;
@@ -151,7 +159,7 @@ int main(int argc, char* argv[])
     }
 
     // Finally, dump kcore to disk
-    if (-1 == dump_kcore(kcore_fd, out_fd, sections, num_physical_ranges))
+    if (-1 == dump_kcore(kcore_fd, out_fd, sections, num_sections))
     {
         fprint_red(stderr, "[-] Failed to dump memory to disk\n");
         ret = -1;
