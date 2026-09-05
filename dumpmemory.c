@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     }
 
     // Obtain a handle to /proc/kcore
-    if (-1 == (kcore_fd = open64(KCORE_FILENAME, O_RDWR | O_LARGEFILE)))
+    if (-1 == (kcore_fd = open64(KCORE_FILENAME, O_RDONLY | O_LARGEFILE)))
     {
         fprint_red(stderr, "[-] Could not open %s\n", KCORE_FILENAME);
         ret = -1;

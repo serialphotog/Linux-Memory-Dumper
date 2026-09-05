@@ -30,7 +30,7 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #define IOMEM_FILENAME "/proc/iomem"
 
 // The maximum number of physical address ranges we support
-#define MAX_PHYSICAL_RANGES 32
+#define MAX_PHYSICAL_RANGES 256
 
 // The label that's associated with system RAM in iomem
 #define SYSTEM_RAM_LABEL "System RAM"

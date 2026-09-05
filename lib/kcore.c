@@ -230,7 +230,7 @@ int match_physical_addresses_to_phdrs(const Elf64_Phdr* prog_hdr,
     int filled_sections = 0;
 
     print_green("[*] Attempting to associate memory ranges from %s with headers from %s\n", 
-        IOMEM_FILENAME, KCORE_FILENAME);
+                IOMEM_FILENAME, KCORE_FILENAME);
 
     for (int i = 0; i < num_hdrs; i++)
     {
