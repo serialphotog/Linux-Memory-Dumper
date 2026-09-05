@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
     }
 
     // Obtain a handle to the output file
-    if (-1 == (out_fd = open64(output_file, O_WRONLY | O_CREAT | O_LARGEFILE, S_IRUSR)))
+    if (-1 == (out_fd = open64(output_file, O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR)))
     {
         fprint_red(stderr, "[-] Could not open %s\n", output_file);
         ret = -1;
