@@ -30,6 +30,7 @@ Linux Memory Dumper. If not, see <https://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static int read_exact(const int fd, void* buffer, const size_t len, const char* desc)
@@ -110,6 +111,36 @@ int main(int argc, char* argv[])
     Elf64_Ehdr elf_hdr;
     if (-1 == read_exact(kcore_fd, (void*)&elf_hdr, sizeof(elf_hdr), "kcore ELF header"))
     {
+        ret = -1;
+        goto cleanup;
+    }
+
+    // Make sure kcore looks the way we assume before trusting its header fields
+    if (0 != memcmp(elf_hdr.e_ident, ELFMAG, SELFMAG))
+    {
+        fprint_red(stderr, "[-] %s is not an ELF file\n", KCORE_FILENAME);
+        ret = -1;
+        goto cleanup;
+    }
+
+    if (ELFCLASS64 != elf_hdr.e_ident[EI_CLASS])
+    {
+        fprint_red(stderr, "[-] %s is not a 64-bit ELF file\n", KCORE_FILENAME);
+        ret = -1;
+        goto cleanup;
+    }
+
+    if (sizeof(Elf64_Phdr) != elf_hdr.e_phentsize)
+    {
+        fprint_red(stderr, "[-] Unexpected kcore program header size (%u)\n",
+            elf_hdr.e_phentsize);
+        ret = -1;
+        goto cleanup;
+    }
+    
+    if (0 == elf_hdr.e_phnum)
+    {
+        fprint_red(stderr, "[-] %s has no program headers\n", KCORE_FILENAME);
         ret = -1;
         goto cleanup;
     }
