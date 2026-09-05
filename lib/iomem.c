@@ -1,4 +1,7 @@
 /*
+Linux Memory Dumper - dumps physical RAM regions via /proc/kcore.
+Copyright (C) 2025-2026 Adam Thompson
+
 This file is part of Linux Memory Dumper.
 
 Linux Memory Dumper is free software: you can redistribute it and/or modify it under the
